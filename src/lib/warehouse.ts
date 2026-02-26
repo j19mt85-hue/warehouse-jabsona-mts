@@ -371,16 +371,23 @@ export async function deleteUser(id: string): Promise<void> {
 
 // Auth context helper
 export async function getCurrentUserProfile(): Promise<AppUser | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  const { data, error } = await supabase.from('warehouse_users').select('*').eq('id', user.id).single();
-  if (error || !data) return null;
-  return {
-    id: data.id,
-    email: data.email,
-    fullName: data.full_name,
-    name: data.name,
-    role: data.role,
-    createdAt: data.created_at
-  };
+  try {
+    const { data, error: authError } = await supabase.auth.getUser();
+    if (authError || !data?.user) return null;
+
+    const { data: dbData, error: dbError } = await supabase.from('warehouse_users').select('*').eq('id', data.user.id).single();
+    if (dbError || !dbData) return null;
+
+    return {
+      id: dbData.id,
+      email: dbData.email,
+      fullName: dbData.full_name,
+      name: dbData.name,
+      role: dbData.role,
+      createdAt: dbData.created_at
+    };
+  } catch (error) {
+    console.error("getCurrentUserProfile error:", error);
+    return null;
+  }
 }

@@ -28,13 +28,24 @@ const App = () => {
 
   useEffect(() => {
     const initAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      if (session) {
-        const profile = await getCurrentUserProfile();
-        setUserProfile(profile);
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+
+        setSession(session);
+        if (session) {
+          try {
+            const profile = await getCurrentUserProfile();
+            setUserProfile(profile);
+          } catch (profileError) {
+            console.error("Profile load error:", profileError);
+          }
+        }
+      } catch (err) {
+        console.error("Auth init error:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     initAuth();
