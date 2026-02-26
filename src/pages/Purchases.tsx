@@ -124,7 +124,8 @@ export default function Purchases() {
           let successCount = 0;
           let updateCount = 0;
           for (const row of data) {
-            const rowName = String(row.Name || row.სახელი || '').trim();
+            const rawName = String(row.Name || row.სახელი || '');
+            const rowName = rawName.replace(/\s+/g, ' ').trim();
             const category = row.Category || row.კატეგორია;
             const costPrice = Number(row.CostPrice || row['შესყიდვის ფასი'] || row.თვითღირებულება || 0);
             const price = Number(row.Price || row['გაყიდვის ფასი'] || row.ფასი || 0);

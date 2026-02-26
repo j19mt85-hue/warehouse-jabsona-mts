@@ -1,5 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Category, Product, Transaction, Settings, AppUser } from '@/types/warehouse';
+import { Product, Category, Transaction, Settings, AppUser } from '@/types/warehouse';
+
+const cleanProductName = (name: string) => name.replace(/\s+/g, ' ').trim();
 
 export { supabase }; // Export supabase for use in pages
 
@@ -39,10 +41,11 @@ export async function getProducts(): Promise<Product[]> {
 }
 
 export async function findProductByName(name: string): Promise<Product | null> {
+  const clean = cleanProductName(name);
   const { data, error } = await supabase
     .from('products')
     .select('*')
-    .ilike('name', name.trim())
+    .ilike('name', clean)
     .limit(1)
     .maybeSingle();
 
@@ -64,7 +67,7 @@ export async function findProductByName(name: string): Promise<Product | null> {
 
 export async function addProduct(product: Omit<Product, 'id' | 'createdAt'>): Promise<Product> {
   const { data, error } = await supabase.from('products').insert([{
-    name: product.name,
+    name: cleanProductName(product.name),
     description: product.description,
     category_id: product.categoryId,
     price: product.price,
@@ -111,16 +114,23 @@ export async function updateProductStock(id: string, quantityChange: number): Pr
   };
 }
 
-export async function updateProduct(id: string, updates: Partial<Omit<Product, 'id' | 'createdAt'>>): Promise<Product | null> {
-  const payload: any = {};
-  if (updates.name !== undefined) payload.name = updates.name;
-  if (updates.description !== undefined) payload.description = updates.description;
-  if (updates.categoryId !== undefined) payload.category_id = updates.categoryId;
-  if (updates.price !== undefined) payload.price = updates.price;
-  if (updates.costPrice !== undefined) payload.cost_price = updates.costPrice;
-  if (updates.unit !== undefined) payload.unit = updates.unit;
+export async function updateProduct(id: string, product: Partial<Product>): Promise<Product> {
+  const updateData: any = {};
+  if (product.name) updateData.name = cleanProductName(product.name);
+  if (product.description !== undefined) updateData.description = product.description;
+  if (product.categoryId !== undefined) updateData.category_id = product.categoryId;
+  if (product.price !== undefined) updateData.price = product.price;
+  if (product.costPrice !== undefined) updateData.cost_price = product.costPrice;
+  if (product.stock !== undefined) updateData.stock = product.stock;
+  if (product.unit !== undefined) updateData.unit = product.unit;
 
-  const { data, error } = await supabase.from('products').update(payload).eq('id', id).select().single();
+  const { data, error } = await supabase
+    .from('products')
+    .update(updateData)
+    .eq('id', id)
+    .select()
+    .single();
+
   if (error) throw error;
   return {
     id: data.id,
