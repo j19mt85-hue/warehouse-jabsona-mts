@@ -51,14 +51,14 @@ function SidebarContent({ onNavigate, isCollapsed }: { onNavigate?: () => void; 
             onClick={() => { navigate(item.path); onNavigate?.(); }}
             title={isCollapsed ? item.title : undefined}
             className={cn(
-              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative",
+              "w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group relative border border-transparent",
               location.pathname === item.path
                 ? "bg-primary text-primary-foreground shadow-md"
-                : "text-sidebar-foreground hover:bg-sidebar-accent/80",
+                : "bg-sidebar-accent text-sidebar-foreground border-sidebar-border hover:bg-primary/10 hover:text-primary hover:border-primary/20",
               isCollapsed && "justify-center px-2"
             )}
           >
-            <item.icon className={cn("h-5 w-5 shrink-0 transition-transform", !isCollapsed && "group-hover:scale-110")} />
+            <item.icon className={cn("h-5 w-5 shrink-0 transition-transform group-hover:scale-110")} />
             {!isCollapsed && <span className="truncate">{item.title}</span>}
           </button>
         ))}
@@ -78,7 +78,7 @@ function SidebarContent({ onNavigate, isCollapsed }: { onNavigate?: () => void; 
           }}
           title={isCollapsed ? "გასვლა" : undefined}
           className={cn(
-            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors group",
+            "w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-destructive bg-red-50 border border-red-200 hover:bg-destructive hover:text-white transition-all duration-200 group",
             isCollapsed && "justify-center px-2"
           )}
         >
