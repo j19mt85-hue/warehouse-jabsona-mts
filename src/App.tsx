@@ -27,40 +27,55 @@ const App = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
+    let mounted = true;
 
+    // Failsafe timeout: force exit loading state after 2.5s if Supabase hangs
+    const timeout = setTimeout(() => {
+      if (mounted && loading) setLoading(false);
+    }, 2500);
+
+    const initialize = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+
+        if (!mounted) return;
         setSession(session);
-        if (session) {
-          try {
-            const profile = await getCurrentUserProfile();
-            setUserProfile(profile);
-          } catch (profileError) {
-            console.error("Profile load error:", profileError);
-          }
+
+        if (session?.user) {
+          const profile = await getCurrentUserProfile(session.user.id);
+          if (mounted) setUserProfile(profile);
         }
       } catch (err) {
         console.error("Auth init error:", err);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+          clearTimeout(timeout);
+        }
       }
     };
 
-    initAuth();
+    initialize();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+      if (event === 'INITIAL_SESSION') return; // Handled heavily by initialize()
+
       setSession(session);
-      if (session) {
-        const profile = await getCurrentUserProfile();
-        setUserProfile(profile);
+      if (session?.user) {
+        const profile = await getCurrentUserProfile(session.user.id);
+        if (mounted) setUserProfile(profile);
       } else {
-        setUserProfile(null);
+        if (mounted) setUserProfile(null);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   if (loading) {
