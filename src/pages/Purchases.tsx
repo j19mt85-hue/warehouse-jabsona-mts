@@ -29,6 +29,33 @@ export default function Purchases() {
   const [stock, setStock] = useState('');
   const [unit, setUnit] = useState('ცალი');
 
+  // Auto-detect unit from category name
+  const CATEGORY_UNIT_MAP: Record<string, string> = {
+    'შპონი': 'მ²',
+    'ლამინატი': 'მ²',
+    'ხე': 'მ.პ.',
+    'ფანერა': 'მ²',
+    'მინა': 'მ²',
+    'ქსოვილი': 'მეტრი',
+    'მეტ': 'მეტრი',
+  };
+
+  const getUnitForCategory = (catName: string): string => {
+    const lower = catName.toLowerCase();
+    for (const [key, val] of Object.entries(CATEGORY_UNIT_MAP)) {
+      if (lower.includes(key.toLowerCase())) return val;
+    }
+    return 'ცალი';
+  };
+
+  const handleCategoryChange = (newCatId: string) => {
+    setCategoryId(newCatId);
+    const cat = categories.find(c => c.id === newCatId);
+    if (cat) {
+      setUnit(getUnitForCategory(cat.name));
+    }
+  };
+
   // Stock add form
   const [selectedProduct, setSelectedProduct] = useState('');
   const [addQty, setAddQty] = useState('');
@@ -293,7 +320,7 @@ export default function Purchases() {
                 </div>
                 <div className="space-y-2">
                   <Label>კატეგორია</Label>
-                  <Select value={categoryId} onValueChange={setCategoryId}>
+                  <Select value={categoryId} onValueChange={handleCategoryChange}>
                     <SelectTrigger>
                       <SelectValue placeholder="აირჩიეთ (არასავალდებულო)" />
                     </SelectTrigger>
@@ -331,6 +358,8 @@ export default function Purchases() {
                       <SelectItem value="კგ">კგ</SelectItem>
                       <SelectItem value="ლიტრი">ლიტრი</SelectItem>
                       <SelectItem value="მეტრი">მეტრი</SelectItem>
+                      <SelectItem value="მ²">მ² (კვ.მ.)</SelectItem>
+                      <SelectItem value="მ.პ.">მ.პ. (გოჯი)</SelectItem>
                       <SelectItem value="კოლოფი">კოლოფი</SelectItem>
                     </SelectContent>
                   </Select>
