@@ -370,12 +370,16 @@ export async function deleteUser(id: string): Promise<void> {
 }
 
 // Auth context helper
-export async function getCurrentUserProfile(): Promise<AppUser | null> {
+export async function getCurrentUserProfile(userId?: string): Promise<AppUser | null> {
   try {
-    const { data, error: authError } = await supabase.auth.getUser();
-    if (authError || !data?.user) return null;
+    let uid = userId;
+    if (!uid) {
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      if (authError || !session?.user) return null;
+      uid = session.user.id;
+    }
 
-    const { data: dbData, error: dbError } = await supabase.from('warehouse_users').select('*').eq('id', data.user.id).single();
+    const { data: dbData, error: dbError } = await supabase.from('warehouse_users').select('*').eq('id', uid).single();
     if (dbError || !dbData) return null;
 
     return {
