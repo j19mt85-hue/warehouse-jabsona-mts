@@ -29,6 +29,8 @@ import {
     addUser,
     updateUser,
     deleteUser,
+    updateProduct,
+    deleteProduct,
     supabase
 } from '@/lib/warehouse';
 import { Settings, Product, Transaction, AppUser } from '@/types/warehouse';
@@ -144,6 +146,53 @@ export default function Admin() {
             toast({ title: 'ექსპორტი', description: 'მონაცემები წარმატებით გადმოიწერა' });
         } catch (error) {
             toast({ title: 'შეცდომა', description: 'ექსპორტი ვერ მოხერხდა', variant: 'destructive' });
+        }
+    };
+
+    const handleMergeDuplicates = async () => {
+        if (!confirm('ნამდვილად გსურთ დუბლიკატი პროდუქტების გაერთიანება? ეს მოქმედება შეკრებს ერთნაირი სახელის მქონე პროდუქტების ნაშთებს და დატოვებს მხოლოდ ერთს.')) return;
+
+        setLoading(true);
+        try {
+            const products = await getProducts();
+            const groups: { [key: string]: Product[] } = {};
+
+            // Group by name (case-insensitive, trimmed)
+            products.forEach(p => {
+                const key = p.name.trim().toLowerCase();
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(p);
+            });
+
+            let mergedCount = 0;
+            for (const key in groups) {
+                const group = groups[key];
+                if (group.length > 1) {
+                    // Sort to pick the "best" record (has category first)
+                    group.sort((a, b) => (b.categoryId ? 1 : 0) - (a.categoryId ? 1 : 0));
+
+                    const canonical = group[0];
+                    const duplicates = group.slice(1);
+                    const totalStock = group.reduce((sum, p) => sum + p.stock, 0);
+
+                    // 1. Update canonical product stock
+                    await updateProduct(canonical.id, { stock: totalStock });
+
+                    // 2. Delete duplicates
+                    for (const dup of duplicates) {
+                        await deleteProduct(dup.id);
+                    }
+                    mergedCount++;
+                }
+            }
+
+            toast({ title: 'წარმატება', description: `გაერთიანდა ${mergedCount} პროდუქტის ჯგუფი.` });
+            loadData();
+        } catch (error) {
+            console.error(error);
+            toast({ title: 'შეცდომა', description: 'გაერთიანება ვერ მოხერხდა', variant: 'destructive' });
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -473,6 +522,9 @@ export default function Admin() {
                                     />
                                     <Button variant="outline" className="gap-2" onClick={() => document.getElementById('json-import')?.click()}>
                                         <Upload className="h-4 w-4" /> იმპორტი (JSON)
+                                    </Button>
+                                    <Button variant="outline" className="gap-2 text-amber-600 border-amber-200 hover:bg-amber-50" onClick={handleMergeDuplicates}>
+                                        <AlertTriangle className="h-4 w-4" /> დუბლიკატების გაერთიანება
                                     </Button>
                                 </div>
 

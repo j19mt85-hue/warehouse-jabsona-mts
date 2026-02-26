@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CategoryManager } from '@/components/CategoryManager';
-import { addProduct, updateProductStock, addTransaction, getProducts, getCategories, formatCurrency } from '@/lib/warehouse';
+import { addProduct, updateProductStock, addTransaction, getProducts, getCategories, formatCurrency, findProductByName } from '@/lib/warehouse';
 import { Category, Product } from '@/types/warehouse';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
@@ -51,7 +51,30 @@ export default function Purchases() {
       toast({ title: 'შეცდომა', description: 'შეავსეთ ყველა სავალდებულო ველი', variant: 'destructive' });
       return;
     }
+
     try {
+      const existing = await findProductByName(name.trim());
+      if (existing) {
+        // Automatically add to existing stock
+        const qty = parseInt(stock);
+        const price = parseFloat(costPrice);
+        await updateProductStock(existing.id, qty);
+        await addTransaction({
+          type: 'purchase',
+          productId: existing.id,
+          productName: existing.name,
+          quantity: qty,
+          unitPrice: price,
+          totalPrice: price * qty,
+          date: new Date().toISOString(),
+          note: 'შესყიდვა (არსებული პროდუქტი)',
+        });
+        toast({ title: 'განახლებულია', description: `${existing.name}-ის მარაგი შეივსო` });
+        setName(''); setDescription(''); setCategoryId(''); setCostPrice(''); setSellPrice(''); setStock(''); setUnit('ცალი');
+        refreshData();
+        return;
+      }
+
       const product = await addProduct({
         name: name.trim(),
         description: description.trim(),
@@ -75,7 +98,7 @@ export default function Purchases() {
       setName(''); setDescription(''); setCategoryId(''); setCostPrice(''); setSellPrice(''); setStock(''); setUnit('ცალი');
       refreshData();
     } catch (error) {
-      toast({ title: 'შეცდომა', description: 'სტოკის შევსება ვერ მოხერხდა', variant: 'destructive' });
+      toast({ title: 'შეცდომა', description: 'პროდუქტის დამატება ვერ მოხერხდა', variant: 'destructive' });
     }
   };
 
@@ -99,28 +122,60 @@ export default function Purchases() {
           }
 
           let successCount = 0;
+          let updateCount = 0;
           for (const row of data) {
-            // Support both English and Georgian headers if possible
-            const name = row.Name || row.სახელი;
+            const rowName = String(row.Name || row.სახელი || '').trim();
             const category = row.Category || row.კატეგორია;
-            const costPrice = row.CostPrice || row['შესყიდვის ფასი'] || row.თვითღირებულება;
-            const price = row.Price || row['გაყიდვის ფასი'] || row.ფასი;
-            const stock = row.Stock || row['რაოდენობა'] || row.ნაშთი || 0;
+            const costPrice = Number(row.CostPrice || row['შესყიდვის ფასი'] || row.თვითღირებულება || 0);
+            const price = Number(row.Price || row['გაყიდვის ფასი'] || row.ფასი || 0);
+            const qty = Number(row.Stock || row['რაოდენობა'] || row.ნაშთი || 0);
 
-            if (name && price && costPrice) {
-              await addProduct({
-                name: String(name),
-                description: String(row.Description || row.აღწერა || ''),
-                categoryId: undefined, // Simple import doesn't map category UUIDs yet
-                price: Number(price),
-                costPrice: Number(costPrice),
-                stock: Number(stock),
-                unit: String(row.Unit || row.ერთეული || 'ცალი')
-              });
-              successCount++;
+            if (rowName && price && costPrice) {
+              const existing = await findProductByName(rowName);
+
+              if (existing) {
+                // Update stock of existing product
+                await updateProductStock(existing.id, qty);
+                await addTransaction({
+                  type: 'purchase',
+                  productId: existing.id,
+                  productName: existing.name,
+                  quantity: qty,
+                  unitPrice: costPrice,
+                  totalPrice: costPrice * qty,
+                  date: new Date().toISOString(),
+                  note: 'Excel იმპორტი (განახლება)'
+                });
+                updateCount++;
+              } else {
+                // Add new product
+                const product = await addProduct({
+                  name: rowName,
+                  description: String(row.Description || row.აღწერა || ''),
+                  categoryId: undefined,
+                  price: price,
+                  costPrice: costPrice,
+                  stock: qty,
+                  unit: String(row.Unit || row.ერთეული || 'ცალი')
+                });
+                await addTransaction({
+                  type: 'purchase',
+                  productId: product.id,
+                  productName: product.name,
+                  quantity: qty,
+                  unitPrice: costPrice,
+                  totalPrice: costPrice * qty,
+                  date: new Date().toISOString(),
+                  note: 'Excel იმპორტი (ახალი)'
+                });
+                successCount++;
+              }
             }
           }
-          toast({ title: 'იმპორტი', description: `${successCount} პროდუქტი წარმატებით დაემატა` });
+          toast({
+            title: 'იმპორტი დასრულდა',
+            description: `${successCount} ახალი, ${updateCount} განახლებული.`
+          });
           refreshData();
         } catch (err) {
           console.error('Excel processing error:', err);

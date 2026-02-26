@@ -38,6 +38,30 @@ export async function getProducts(): Promise<Product[]> {
   }));
 }
 
+export async function findProductByName(name: string): Promise<Product | null> {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .ilike('name', name.trim())
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  return {
+    id: data.id,
+    name: data.name,
+    description: data.description,
+    categoryId: data.category_id,
+    price: Number(data.price),
+    costPrice: Number(data.cost_price),
+    stock: Number(data.stock),
+    unit: data.unit,
+    createdAt: data.created_at
+  };
+}
+
 export async function addProduct(product: Omit<Product, 'id' | 'createdAt'>): Promise<Product> {
   const { data, error } = await supabase.from('products').insert([{
     name: product.name,
