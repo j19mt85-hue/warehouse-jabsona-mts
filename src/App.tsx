@@ -13,6 +13,8 @@ import NotFound from "./pages/NotFound";
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUserProfile } from "@/lib/warehouse";
+import { AppUser } from "@/types/warehouse";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import { Navigate } from "react-router-dom";
@@ -21,16 +23,30 @@ const queryClient = new QueryClient();
 
 const App = () => {
   const [session, setSession] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const initAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
+      if (session) {
+        const profile = await getCurrentUserProfile();
+        setUserProfile(profile);
+      }
       setLoading(false);
-    });
+    };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    initAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
+      if (session) {
+        const profile = await getCurrentUserProfile();
+        setUserProfile(profile);
+      } else {
+        setUserProfile(null);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -57,15 +73,25 @@ const App = () => {
               path="/*"
               element={
                 session ? (
-                  <Layout>
+                  <Layout userRole={userProfile?.role || 'admin'} userName={userProfile?.name || userProfile?.email}>
                     <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/purchases" element={<Purchases />} />
+                      {/* Cashier Routes */}
                       <Route path="/sales" element={<Sales />} />
                       <Route path="/inventory" element={<Inventory />} />
-                      <Route path="/accounting" element={<Accounting />} />
-                      <Route path="/admin" element={<Admin />} />
-                      <Route path="*" element={<NotFound />} />
+
+                      {/* Admin-only Routes */}
+                      {userProfile?.role !== 'cashier' ? (
+                        <>
+                          <Route path="/" element={<Index />} />
+                          <Route path="/purchases" element={<Purchases />} />
+                          <Route path="/accounting" element={<Accounting />} />
+                          <Route path="/admin" element={<Admin />} />
+                        </>
+                      ) : (
+                        <Route path="*" element={<Navigate to="/sales" replace />} />
+                      )}
+
+                      <Route path="*" element={userProfile?.role === 'cashier' ? <Navigate to="/sales" replace /> : <NotFound />} />
                     </Routes>
                   </Layout>
                 ) : (

@@ -219,7 +219,9 @@ export async function getTransactions(): Promise<Transaction[]> {
     unitPrice: Number(t.unit_price),
     totalPrice: Number(t.total_price),
     date: t.date,
-    note: t.note
+    note: t.note,
+    cashierId: t.cashier_id,
+    cashierName: t.cashier_name
   }));
 }
 
@@ -232,7 +234,9 @@ export async function addTransaction(tx: Omit<Transaction, 'id'>): Promise<Trans
     unit_price: tx.unitPrice,
     total_price: tx.totalPrice,
     date: tx.date || new Date().toISOString(),
-    note: tx.note
+    note: tx.note,
+    cashier_id: tx.cashierId,
+    cashier_name: tx.cashierName
   }]).select().single();
   if (error) throw error;
   return {
@@ -244,7 +248,9 @@ export async function addTransaction(tx: Omit<Transaction, 'id'>): Promise<Trans
     unitPrice: Number(data.unit_price),
     totalPrice: Number(data.total_price),
     date: data.date,
-    note: data.note
+    note: data.note,
+    cashierId: data.cashier_id,
+    cashierName: data.cashier_name
   };
 }
 
@@ -300,11 +306,13 @@ export async function getUsers(): Promise<AppUser[]> {
     id: u.id,
     email: u.email,
     fullName: u.full_name,
+    name: u.name,
+    role: u.role,
     createdAt: u.created_at
   }));
 }
 
-export async function addUser(user: { email: string; password: string }): Promise<AppUser> {
+export async function addUser(user: { email: string; password: string; name?: string; role?: 'admin' | 'cashier' }): Promise<AppUser> {
   // Create real Supabase Auth user
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email: user.email,
@@ -320,7 +328,8 @@ export async function addUser(user: { email: string; password: string }): Promis
   const { data, error } = await supabase.from('warehouse_users').insert([{
     id: authData.user.id,
     email: user.email,
-    role: 'admin'
+    name: user.name,
+    role: user.role || 'cashier'
   }]).select().single();
 
   // If already exists (upsert) that's fine
@@ -330,6 +339,8 @@ export async function addUser(user: { email: string; password: string }): Promis
     id: authData.user.id,
     email: user.email,
     fullName: undefined,
+    name: data?.name,
+    role: data?.role,
     createdAt: authData.user.created_at
   };
 }
@@ -338,6 +349,8 @@ export async function updateUser(id: string, updates: Partial<Omit<AppUser, 'id'
   const payload: any = {};
   if (updates.email !== undefined) payload.email = updates.email;
   if (updates.fullName !== undefined) payload.full_name = updates.fullName;
+  if (updates.name !== undefined) payload.name = updates.name;
+  if (updates.role !== undefined) payload.role = updates.role;
 
   const { data, error } = await supabase.from('warehouse_users').update(payload).eq('id', id).select().single();
   if (error) throw error;
@@ -345,6 +358,8 @@ export async function updateUser(id: string, updates: Partial<Omit<AppUser, 'id'
     id: data.id,
     email: data.email,
     fullName: data.full_name,
+    name: data.name,
+    role: data.role,
     createdAt: data.created_at
   };
 }
@@ -352,4 +367,20 @@ export async function updateUser(id: string, updates: Partial<Omit<AppUser, 'id'
 export async function deleteUser(id: string): Promise<void> {
   const { error } = await supabase.from('warehouse_users').delete().eq('id', id);
   if (error) throw error;
+}
+
+// Auth context helper
+export async function getCurrentUserProfile(): Promise<AppUser | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data, error } = await supabase.from('warehouse_users').select('*').eq('id', user.id).single();
+  if (error || !data) return null;
+  return {
+    id: data.id,
+    email: data.email,
+    fullName: data.full_name,
+    name: data.name,
+    role: data.role,
+    createdAt: data.created_at
+  };
 }

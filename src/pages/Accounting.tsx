@@ -165,6 +165,19 @@ export default function Accounting() {
     }
   };
 
+  const cashierStats = useMemo(() => {
+    const map = new Map<string, { totalSales: number; txCount: number; name: string }>();
+    filtered.filter(t => t.type === 'sale').forEach(tx => {
+      const cId = tx.cashierId || 'admin';
+      const cName = tx.cashierName || 'ადმინი';
+      if (!map.has(cId)) map.set(cId, { totalSales: 0, txCount: 0, name: cName });
+      const entry = map.get(cId)!;
+      entry.totalSales += tx.totalPrice;
+      entry.txCount += 1;
+    });
+    return Array.from(map.values()).sort((a, b) => b.totalSales - a.totalSales);
+  }, [filtered]);
+
   return (
     <div className="bg-background p-4 md:p-8 animate-fade-in">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -290,10 +303,11 @@ export default function Accounting() {
         )}
 
         <Tabs defaultValue="history" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 max-w-md">
+          <TabsList className="grid w-full grid-cols-4 max-w-2xl">
             <TabsTrigger value="history">ისტორია</TabsTrigger>
             <TabsTrigger value="profitability">მომგებიანობა</TabsTrigger>
             <TabsTrigger value="expenses">ხარჯები</TabsTrigger>
+            <TabsTrigger value="cashiers">მოლარეები</TabsTrigger>
           </TabsList>
 
           <TabsContent value="history" className="pt-4 space-y-6">
@@ -435,6 +449,38 @@ export default function Accounting() {
                   ))}
                   {expenses.length === 0 && <p className="text-center py-8 text-muted-foreground">ხარჯები არ არის</p>}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="cashiers" className="pt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>მოლარეების გაყიდვები</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>მოლარე / ადმინი</TableHead>
+                      <TableHead className="text-right">ტრანზაქციების რ-ბა</TableHead>
+                      <TableHead className="text-right">ჯამური გაყიდვები</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {cashierStats.map(s => (
+                      <TableRow key={s.name}>
+                        <TableCell className="font-medium">{s.name}</TableCell>
+                        <TableCell className="text-right">{s.txCount}</TableCell>
+                        <TableCell className="text-right font-bold text-accent">{formatCurrency(s.totalSales)}</TableCell>
+                      </TableRow>
+                    ))}
+                    {cashierStats.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">მონაცემები არ არის</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           </TabsContent>

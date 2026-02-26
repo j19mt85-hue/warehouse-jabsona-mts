@@ -26,6 +26,8 @@ export interface Transaction {
   totalPrice: number;
   date: string;
   note?: string;
+  cashierId?: string;
+  cashierName?: string;
 }
 
 export interface Settings {
@@ -42,7 +44,9 @@ export interface Settings {
 export interface AppUser {
   id: string;
   email: string;
-  fullName?: string;
+  fullName?: string; // Legacy
+  name?: string;     // New
+  role?: 'admin' | 'cashier';
   createdAt: string;
 }
 

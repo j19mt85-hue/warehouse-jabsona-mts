@@ -6,8 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getProducts, updateProductStock, addTransaction, formatCurrency, getCategories } from '@/lib/warehouse';
-import { Product, Category, LOW_STOCK_THRESHOLD } from '@/types/warehouse';
+import { getProducts, updateProductStock, addTransaction, formatCurrency, getCategories, getCurrentUserProfile } from '@/lib/warehouse';
+import { Product, Category, AppUser, LOW_STOCK_THRESHOLD } from '@/types/warehouse';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Sales() {
@@ -19,12 +19,14 @@ export default function Sales() {
   const [selectedProduct, setSelectedProduct] = useState('');
   const [quantity, setQuantity] = useState('');
   const [sellPrice, setSellPrice] = useState('');
+  const [userProfile, setUserProfile] = useState<AppUser | null>(null);
 
   const refreshData = async () => {
     try {
-      const [prods, cats] = await Promise.all([getProducts(), getCategories()]);
+      const [prods, cats, profile] = await Promise.all([getProducts(), getCategories(), getCurrentUserProfile()]);
       setProducts(prods);
       setCategories(cats);
+      setUserProfile(profile);
     } catch (error) {
       console.error(error);
     }
@@ -59,6 +61,8 @@ export default function Sales() {
           unitPrice: price,
           totalPrice: price * qty,
           date: new Date().toISOString(),
+          cashierId: userProfile?.id,
+          cashierName: userProfile?.name || userProfile?.email
         });
         toast({ title: 'წარმატება', description: `გაიყიდა ${qty} ${product.unit} ${product.name}` });
         setSelectedProduct(''); setQuantity(''); setSellPrice('');

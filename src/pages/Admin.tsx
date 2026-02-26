@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     getSettings,
@@ -54,7 +55,7 @@ export default function Admin() {
     // User Edit state
     const [isUserModalOpen, setIsUserModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<AppUser | null>(null);
-    const [userForm, setUserForm] = useState({ email: '', password: '' });
+    const [userForm, setUserForm] = useState<{ email: string; password: string; name: string; role: 'admin' | 'cashier' }>({ email: '', password: '', name: '', role: 'cashier' });
 
     // Settings form state
     const [companyName, setCompanyName] = useState('');
@@ -204,15 +205,15 @@ export default function Admin() {
         }
         try {
             if (editingUser) {
-                await updateUser(editingUser.id, { email: editingUser.email });
+                await updateUser(editingUser.id, { email: editingUser.email, name: userForm.name, role: userForm.role });
                 toast({ title: 'წარმატება', description: 'მომხმარებელი განახლდა' });
             } else {
-                await addUser({ email: userForm.email, password: userForm.password });
+                await addUser({ email: userForm.email, password: userForm.password, name: userForm.name, role: userForm.role });
                 toast({ title: 'წარმატება', description: 'მომხმარებელი დაემატა! დადასტურების ელ-ფოსტა გაიგზავნა.' });
             }
             setIsUserModalOpen(false);
             setEditingUser(null);
-            setUserForm({ email: '', password: '' });
+            setUserForm({ email: '', password: '', name: '', role: 'cashier' });
             loadData();
         } catch (error: any) {
             console.error('Save user error:', error);
@@ -367,7 +368,7 @@ export default function Admin() {
                                 </div>
                                 <Button className="gap-2" onClick={() => {
                                     setEditingUser(null);
-                                    setUserForm({ email: '', password: '' });
+                                    setUserForm({ email: '', password: '', name: '', role: 'cashier' });
                                     setIsUserModalOpen(true);
                                 }}>
                                     <Plus className="h-4 w-4" /> დამატება
@@ -377,8 +378,9 @@ export default function Admin() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>ელ-ფოსტა</TableHead>
                                             <TableHead>სახელი</TableHead>
+                                            <TableHead>ელ-ფოსტა</TableHead>
+                                            <TableHead>როლი</TableHead>
                                             <TableHead>შექმნის თარიღი</TableHead>
                                             <TableHead className="text-right">მოქმედება</TableHead>
                                         </TableRow>
@@ -386,13 +388,18 @@ export default function Admin() {
                                     <TableBody>
                                         {users.map(u => (
                                             <TableRow key={u.id}>
-                                                <TableCell className="font-medium font-mono text-xs">{u.email}</TableCell>
-                                                <TableCell>{u.fullName || '-'}</TableCell>
+                                                <TableCell className="font-semibold">{u.name || u.fullName || '-'}</TableCell>
+                                                <TableCell className="font-mono text-xs">{u.email}</TableCell>
+                                                <TableCell>
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${u.role === 'admin' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                                                        {u.role === 'admin' ? 'ადმინი' : 'მოლარე'}
+                                                    </span>
+                                                </TableCell>
                                                 <TableCell>{new Date(u.createdAt).toLocaleDateString()}</TableCell>
                                                 <TableCell className="text-right space-x-2">
                                                     <Button variant="ghost" size="icon" onClick={() => {
                                                         setEditingUser(u);
-                                                        setUserForm({ email: u.email, password: '' });
+                                                        setUserForm({ email: u.email, password: '', name: u.name || u.fullName || '', role: u.role || 'cashier' });
                                                         setIsUserModalOpen(true);
                                                     }}><Edit2 className="h-4 w-4" /></Button>
                                                     <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteUser(u.id)}><Trash2 className="h-4 w-4" /></Button>
@@ -424,6 +431,26 @@ export default function Admin() {
                                             {editingUser && (
                                                 <p className="text-xs text-muted-foreground">ელ-ფოსტის შეცვლა შეუძლებელია — მხოლოდ სახელის განახლებაა შესაძლებელი</p>
                                             )}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>სახელი და გვარი *</Label>
+                                            <Input
+                                                value={userForm.name}
+                                                onChange={e => setUserForm({ ...userForm, name: e.target.value })}
+                                                placeholder="მაგ: გიორგი ბერიძე"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>როლი *</Label>
+                                            <Select value={userForm.role} onValueChange={(val: 'admin' | 'cashier') => setUserForm({ ...userForm, role: val })}>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="აირჩიეთ როლი" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="cashier">მოლარე</SelectItem>
+                                                    <SelectItem value="admin">ადმინისტრატორი</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                         {!editingUser && (
                                             <div className="space-y-2">

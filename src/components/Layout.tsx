@@ -17,16 +17,10 @@ const navItems = [
   { title: 'ადმინ პანელი', icon: ShieldCheck, path: '/admin' },
 ];
 
-function SidebarContent({ onNavigate, isCollapsed }: { onNavigate?: () => void; isCollapsed?: boolean }) {
+function SidebarContent({ onNavigate, isCollapsed, userRole, userName }: { onNavigate?: () => void; isCollapsed?: boolean; userRole?: string; userName?: string }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [userEmail, setUserEmail] = useState<string | null>(null);
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUserEmail(user?.email || null);
-    });
-  }, []);
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -45,7 +39,7 @@ function SidebarContent({ onNavigate, isCollapsed }: { onNavigate?: () => void; 
       </div>
 
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto overflow-x-hidden">
-        {navItems.map(item => (
+        {navItems.filter(item => userRole !== 'cashier' || ['/sales', '/inventory'].includes(item.path)).map(item => (
           <button
             key={item.path}
             onClick={() => { navigate(item.path); onNavigate?.(); }}
@@ -65,10 +59,10 @@ function SidebarContent({ onNavigate, isCollapsed }: { onNavigate?: () => void; 
       </nav>
 
       <div className="p-2 border-t border-sidebar-border mt-auto">
-        {!isCollapsed && userEmail && (
+        {!isCollapsed && userName && (
           <div className="px-3 py-2 mb-2 bg-muted/50 rounded-lg overflow-hidden">
-            <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-tighter">მომხმარებელი</p>
-            <p className="text-[11px] font-medium truncate">{userEmail}</p>
+            <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-tighter">{userRole === 'cashier' ? 'მოლარე' : 'ადმინი'}</p>
+            <p className="text-[11px] font-medium truncate">{userName}</p>
           </div>
         )}
         <button
@@ -90,7 +84,7 @@ function SidebarContent({ onNavigate, isCollapsed }: { onNavigate?: () => void; 
   );
 }
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function Layout({ children, userRole, userName }: { children: React.ReactNode; userRole?: string; userName?: string }) {
   const isMobile = useIsMobile();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
@@ -118,7 +112,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             isCollapsed ? "w-20" : "w-60"
           )}
         >
-          <SidebarContent isCollapsed={isCollapsed} />
+          <SidebarContent isCollapsed={isCollapsed} userRole={userRole} userName={userName} />
 
           {/* Collapse Toggle */}
           <button
@@ -146,7 +140,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-64 p-0 bg-sidebar-background">
-                <SidebarContent onNavigate={() => setMobileOpen(false)} />
+                <SidebarContent onNavigate={() => setMobileOpen(false)} userRole={userRole} userName={userName} />
               </SheetContent>
             </Sheet>
             <div className="flex items-center gap-2 flex-1">
