@@ -191,7 +191,7 @@ export default function Inventory() {
                     </div>
                     <div className="flex items-start gap-2 ml-4">
                       <div className="text-right">
-                        <p className={`text-2xl font-bold ${product.stock <= LOW_STOCK_THRESHOLD ? 'text-warning' : 'text-accent'}`}>
+                        <p className={`text-2xl font-bold ${product.stock <= LOW_STOCK_THRESHOLD ? 'text-destructive' : 'text-accent'}`}>
                           {product.stock}
                         </p>
                         <p className="text-xs text-muted-foreground">{product.unit}</p>

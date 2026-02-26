@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getProducts, updateProductStock, addTransaction, formatCurrency } from '@/lib/warehouse';
-import { Product } from '@/types/warehouse';
+import { Product, LOW_STOCK_THRESHOLD } from '@/types/warehouse';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Sales() {
@@ -88,19 +88,17 @@ export default function Sales() {
                 <SelectContent>
                   {products.filter(p => p.stock > 0).map(p => (
                     <SelectItem key={p.id} value={p.id}>
-                      {p.name} (ნაშთი: {p.stock} {p.unit})
+                      {p.name} (ნაშთი: <span className={p.stock <= LOW_STOCK_THRESHOLD ? 'text-destructive font-bold' : ''}>{p.stock}</span> {p.unit})
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {selected && (
-              <div className="rounded-lg bg-muted p-3 text-sm space-y-1">
-                <p><span className="text-muted-foreground">მარაგში:</span> {selected.stock} {selected.unit}</p>
-                <p><span className="text-muted-foreground">გასაყიდი ფასი:</span> {formatCurrency(selected.price)}</p>
-              </div>
-            )}
+            <div className="rounded-lg bg-muted p-3 text-sm space-y-1">
+              <p><span className="text-muted-foreground">მარაგში:</span> <span className={selected.stock <= LOW_STOCK_THRESHOLD ? 'text-destructive font-bold' : ''}>{selected.stock} {selected.unit}</span></p>
+              <p><span className="text-muted-foreground">გასაყიდი ფასი:</span> {formatCurrency(selected.price)}</p>
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
