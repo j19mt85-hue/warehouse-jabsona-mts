@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Product, Category, Transaction, Settings, AppUser } from '@/types/warehouse';
+import { Product, Category, Transaction, Settings, AppUser, Expense } from '@/types/warehouse';
 
 const cleanProductName = (name: string) => name.replace(/\s+/g, ' ').trim();
 
@@ -16,6 +16,46 @@ export async function addCategory(name: string): Promise<Category> {
   const { data, error } = await supabase.from('categories').insert([{ name }]).select().single();
   if (error) throw error;
   return data;
+}
+
+// Expenses
+export async function getExpenses(): Promise<Expense[]> {
+  const { data, error } = await supabase.from('warehouse_expenses').select('*').order('date', { ascending: false });
+  if (error) throw error;
+  return data.map(e => ({
+    id: e.id,
+    title: e.title,
+    amount: Number(e.amount),
+    category: e.category,
+    date: e.date,
+    note: e.note,
+    createdAt: e.created_at
+  }));
+}
+
+export async function addExpense(expense: Omit<Expense, 'id' | 'createdAt'>): Promise<Expense> {
+  const { data, error } = await supabase.from('warehouse_expenses').insert([{
+    title: expense.title,
+    amount: expense.amount,
+    category: expense.category,
+    date: expense.date,
+    note: expense.note
+  }]).select().single();
+  if (error) throw error;
+  return {
+    id: data.id,
+    title: data.title,
+    amount: Number(data.amount),
+    category: data.category,
+    date: data.date,
+    note: data.note,
+    createdAt: data.created_at
+  };
+}
+
+export async function deleteExpense(id: string): Promise<void> {
+  const { error } = await supabase.from('warehouse_expenses').delete().eq('id', id);
+  if (error) throw error;
 }
 
 export async function deleteCategory(id: string): Promise<void> {

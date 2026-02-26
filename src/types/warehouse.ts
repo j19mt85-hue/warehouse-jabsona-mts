@@ -46,4 +46,14 @@ export interface AppUser {
   createdAt: string;
 }
 
+export interface Expense {
+  id: string;
+  title: string;
+  amount: number;
+  category: string;
+  date: string;
+  note?: string;
+  createdAt: string;
+}
+
 export const LOW_STOCK_THRESHOLD = 10;
