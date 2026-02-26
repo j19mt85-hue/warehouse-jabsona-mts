@@ -23,6 +23,7 @@ export default function Inventory() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'price' | 'stock'>('name');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   // Edit form state
   const [editName, setEditName] = useState('');
@@ -94,6 +95,8 @@ export default function Inventory() {
   };
 
   const filteredProducts = products.filter(p => {
+    const matchCat = selectedCategory === 'all' || p.categoryId === selectedCategory;
+    if (!matchCat) return false;
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q) || getCategoryName(p.categoryId).toLowerCase().includes(q);
@@ -143,6 +146,36 @@ export default function Inventory() {
             </Button>
           </div>
         </div>
+
+        {/* Category filter tabs */}
+        {categories.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto pb-1 print:hidden">
+            <button
+              onClick={() => setSelectedCategory('all')}
+              className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all duration-200 ${selectedCategory === 'all'
+                  ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                  : 'bg-background text-muted-foreground border-border hover:bg-muted'
+                }`}
+            >
+              ყველა ({products.length})
+            </button>
+            {categories.map(cat => {
+              const count = products.filter(p => p.categoryId === cat.id).length;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all duration-200 ${selectedCategory === cat.id
+                      ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                      : 'bg-background text-muted-foreground border-border hover:bg-muted'
+                    }`}
+                >
+                  {cat.name} ({count})
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {lowStockProducts.length > 0 && (
           <div className="rounded-lg bg-warning/10 border border-warning/30 p-4 animate-pulse-warning">
