@@ -1,0 +1,186 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 97%;
+    --foreground: 220 30% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 30% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 30% 12%;
+
+    --primary: 220 60% 25%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 45 90% 55%;
+    --secondary-foreground: 220 30% 12%;
+
+    --muted: 220 15% 92%;
+    --muted-foreground: 220 10% 45%;
+
+    --accent: 160 50% 40%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 15% 88%;
+    --input: 220 15% 88%;
+    --ring: 220 60% 25%;
+
+    --radius: 0.75rem;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 92% 14%;
+
+    --success: 160 50% 40%;
+    --success-foreground: 0 0% 98%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 220 25% 8%;
+    --foreground: 220 10% 92%;
+    --card: 220 25% 12%;
+    --card-foreground: 220 10% 92%;
+    --popover: 220 25% 12%;
+    --popover-foreground: 220 10% 92%;
+    --primary: 45 90% 55%;
+    --primary-foreground: 220 30% 8%;
+    --secondary: 220 30% 22%;
+    --secondary-foreground: 220 10% 92%;
+    --muted: 220 20% 18%;
+    --muted-foreground: 220 10% 55%;
+    --accent: 160 50% 40%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 20% 20%;
+    --input: 220 20% 20%;
+    --ring: 45 90% 55%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 92% 14%;
+    --success: 160 50% 40%;
+    --success-foreground: 0 0% 98%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-georgian antialiased;
+  }
+}
+
+@media print {
+
+  /* Hide UI elements */
+  .print\:hidden,
+  .print\\:hidden,
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea,
+  .no-print,
+  nav,
+  aside,
+  header,
+  footer,
+  .fixed,
+  [aria-modal="true"],
+  .lucide {
+    display: none !important;
+  }
+
+  /* Reset layout for paper */
+  body,
+  html,
+  #root,
+  .flex.h-screen {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+    /* Force block layout to remove flex side-by-side */
+  }
+
+  main {
+    padding: 10mm !important;
+    /* Standard print margins */
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    display: block !important;
+  }
+
+  .max-w-4xl,
+  .max-w-7xl,
+  .container {
+    max-width: none !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Simplify cards and borders */
+  .border,
+  .card,
+  .rounded-xl {
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    background-color: white !important;
+    border-radius: 4px !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* Typography */
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: black !important;
+    font-weight: bold !important;
+    margin-bottom: 10px !important;
+  }
+
+  /* Hide colors/backgrounds that waste ink */
+  .bg-muted,
+  .bg-muted\/50,
+  .bg-gray-50,
+  .bg-sidebar-background,
+  .bg-primary,
+  .bg-accent,
+  .bg-destructive {
+    background: transparent !important;
+    color: black !important;
+    border: 1px solid #ccc !important;
+  }
+
+  /* Transaction status indicators - use text instead of color dots */
+  .rounded-full {
+    border: 1px solid #555 !important;
+  }
+}
