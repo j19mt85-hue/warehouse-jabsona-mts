@@ -412,9 +412,14 @@ export default function Admin() {
                                             <Label>ელ-ფოსტა</Label>
                                             <Input
                                                 value={userForm.email}
-                                                onChange={e => setUserForm({ ...userForm, email: e.target.value })}
+                                                onChange={e => !editingUser && setUserForm({ ...userForm, email: e.target.value })}
                                                 placeholder="user@example.com"
+                                                disabled={!!editingUser}
+                                                className={editingUser ? 'opacity-60 cursor-not-allowed' : ''}
                                             />
+                                            {editingUser && (
+                                                <p className="text-xs text-muted-foreground">ელ-ფოსტის შეცვლა შეუძლებელია — მხოლოდ სახელის განახლებაა შესაძლებელი</p>
+                                            )}
                                         </div>
                                         <div className="space-y-2">
                                             <Label>სრული სახელი</Label>
