@@ -32,12 +32,8 @@ export default function Purchases() {
   // Auto-detect unit from category name
   const CATEGORY_UNIT_MAP: Record<string, string> = {
     'შპონი': 'მ²',
-    'ლამინატი': 'მ²',
     'ხე': 'მ.პ.',
-    'ფანერა': 'მ²',
-    'მინა': 'მ²',
     'ქსოვილი': 'მეტრი',
-    'მეტ': 'მეტრი',
   };
 
   const getUnitForCategory = (catName: string): string => {
