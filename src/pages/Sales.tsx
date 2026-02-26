@@ -6,22 +6,25 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getProducts, updateProductStock, addTransaction, formatCurrency } from '@/lib/warehouse';
-import { Product, LOW_STOCK_THRESHOLD } from '@/types/warehouse';
+import { getProducts, updateProductStock, addTransaction, formatCurrency, getCategories } from '@/lib/warehouse';
+import { Product, Category, LOW_STOCK_THRESHOLD } from '@/types/warehouse';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Sales() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedProduct, setSelectedProduct] = useState('');
   const [quantity, setQuantity] = useState('');
   const [sellPrice, setSellPrice] = useState('');
 
   const refreshData = async () => {
     try {
-      const prods = await getProducts();
+      const [prods, cats] = await Promise.all([getProducts(), getCategories()]);
       setProducts(prods);
+      setCategories(cats);
     } catch (error) {
       console.error(error);
     }
@@ -81,12 +84,26 @@ export default function Sales() {
             <CardTitle>ახალი გაყიდვა</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+
+            <div className="space-y-2">
+              <Label>კატეგორია (ფილტრი)</Label>
+              <Select value={selectedCategory} onValueChange={(val) => { setSelectedCategory(val); setSelectedProduct(''); }}>
+                <SelectTrigger><SelectValue placeholder="ყველა კატეგორია" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">ყველა</SelectItem>
+                  {categories.map(cat => (
+                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-2">
               <Label>პროდუქტი *</Label>
               <Select value={selectedProduct} onValueChange={setSelectedProduct}>
                 <SelectTrigger><SelectValue placeholder="აირჩიეთ პროდუქტი" /></SelectTrigger>
                 <SelectContent>
-                  {products.filter(p => p.stock > 0).map(p => (
+                  {products.filter(p => p.stock > 0 && (selectedCategory === 'all' || p.categoryId === selectedCategory)).map(p => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.name} (ნაშთი: <span className={p.stock <= LOW_STOCK_THRESHOLD ? 'text-destructive font-bold' : ''}>{p.stock}</span> {p.unit})
                     </SelectItem>
