@@ -54,7 +54,7 @@ export default function Admin() {
     // User Edit state
     const [isUserModalOpen, setIsUserModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<AppUser | null>(null);
-    const [userForm, setUserForm] = useState({ email: '', fullName: '' });
+    const [userForm, setUserForm] = useState({ email: '', password: '' });
 
     // Settings form state
     const [companyName, setCompanyName] = useState('');
@@ -198,17 +198,21 @@ export default function Admin() {
 
     const handleSaveUser = async () => {
         if (!userForm.email) return;
+        if (!editingUser && !userForm.password) {
+            toast({ title: 'შეცდომა', description: 'პაროლი სავალდებულოა', variant: 'destructive' });
+            return;
+        }
         try {
             if (editingUser) {
-                await updateUser(editingUser.id, userForm);
+                await updateUser(editingUser.id, { email: editingUser.email });
                 toast({ title: 'წარმატება', description: 'მომხმარებელი განახლდა' });
             } else {
-                await addUser(userForm);
-                toast({ title: 'წარმატება', description: 'მომხმარებელი დაემატა' });
+                await addUser({ email: userForm.email, password: userForm.password });
+                toast({ title: 'წარმატება', description: 'მომხმარებელი დაემატა! დადასტურების ელ-ფოსტა გაიგზავნა.' });
             }
             setIsUserModalOpen(false);
             setEditingUser(null);
-            setUserForm({ email: '', fullName: '' });
+            setUserForm({ email: '', password: '' });
             loadData();
         } catch (error: any) {
             console.error('Save user error:', error);
@@ -363,7 +367,7 @@ export default function Admin() {
                                 </div>
                                 <Button className="gap-2" onClick={() => {
                                     setEditingUser(null);
-                                    setUserForm({ email: '', fullName: '' });
+                                    setUserForm({ email: '', password: '' });
                                     setIsUserModalOpen(true);
                                 }}>
                                     <Plus className="h-4 w-4" /> დამატება
@@ -388,7 +392,7 @@ export default function Admin() {
                                                 <TableCell className="text-right space-x-2">
                                                     <Button variant="ghost" size="icon" onClick={() => {
                                                         setEditingUser(u);
-                                                        setUserForm({ email: u.email, fullName: u.fullName || '' });
+                                                        setUserForm({ email: u.email, password: '' });
                                                         setIsUserModalOpen(true);
                                                     }}><Edit2 className="h-4 w-4" /></Button>
                                                     <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteUser(u.id)}><Trash2 className="h-4 w-4" /></Button>
@@ -421,14 +425,22 @@ export default function Admin() {
                                                 <p className="text-xs text-muted-foreground">ელ-ფოსტის შეცვლა შეუძლებელია — მხოლოდ სახელის განახლებაა შესაძლებელი</p>
                                             )}
                                         </div>
-                                        <div className="space-y-2">
-                                            <Label>სრული სახელი</Label>
-                                            <Input
-                                                value={userForm.fullName}
-                                                onChange={e => setUserForm({ ...userForm, fullName: e.target.value })}
-                                                placeholder="სახელი გვარი"
-                                            />
-                                        </div>
+                                        {!editingUser && (
+                                            <div className="space-y-2">
+                                                <Label>პაროლი *</Label>
+                                                <Input
+                                                    type="password"
+                                                    value={userForm.password}
+                                                    onChange={e => setUserForm({ ...userForm, password: e.target.value })}
+                                                    placeholder="მინ. 6 სიმბოლო"
+                                                />
+                                            </div>
+                                        )}
+                                        {editingUser && (
+                                            <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
+                                                პაროლის შეცვლა შესაძლებელია მხოლოდ Login გვერდის "Forgot password" ღილაკით.
+                                            </div>
+                                        )}
                                         <div className="flex justify-end gap-2 pt-4">
                                             <Button variant="outline" onClick={() => setIsUserModalOpen(false)}>გაუქმება</Button>
                                             <Button onClick={handleSaveUser}>შენახვა</Button>

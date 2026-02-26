@@ -304,18 +304,33 @@ export async function getUsers(): Promise<AppUser[]> {
   }));
 }
 
-export async function addUser(user: Omit<AppUser, 'id' | 'createdAt'>): Promise<AppUser> {
-  const { data, error } = await supabase.from('warehouse_users').insert([{
+export async function addUser(user: { email: string; password: string }): Promise<AppUser> {
+  // Create real Supabase Auth user
+  const { data: authData, error: authError } = await supabase.auth.signUp({
     email: user.email,
-    full_name: user.fullName,
+    password: user.password,
+    options: {
+      emailRedirectTo: window.location.origin,
+    },
+  });
+  if (authError) throw authError;
+  if (!authData.user) throw new Error('მომხმარებლის შექმნა ვერ მოხერხდა');
+
+  // Register in warehouse_users table
+  const { data, error } = await supabase.from('warehouse_users').insert([{
+    id: authData.user.id,
+    email: user.email,
     role: 'admin'
   }]).select().single();
-  if (error) throw error;
+
+  // If already exists (upsert) that's fine
+  if (error && !error.message.includes('duplicate')) throw error;
+
   return {
-    id: data.id,
-    email: data.email,
-    fullName: data.full_name,
-    createdAt: data.created_at
+    id: authData.user.id,
+    email: user.email,
+    fullName: undefined,
+    createdAt: authData.user.created_at
   };
 }
 
