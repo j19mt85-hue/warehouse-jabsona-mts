@@ -95,10 +95,12 @@ export default function Sales() {
               </Select>
             </div>
 
-            <div className="rounded-lg bg-muted p-3 text-sm space-y-1">
-              <p><span className="text-muted-foreground">მარაგში:</span> <span className={selected.stock <= LOW_STOCK_THRESHOLD ? 'text-destructive font-bold' : ''}>{selected.stock} {selected.unit}</span></p>
-              <p><span className="text-muted-foreground">გასაყიდი ფასი:</span> {formatCurrency(selected.price)}</p>
-            </div>
+            {selected && (
+              <div className="rounded-lg bg-muted p-3 text-sm space-y-1">
+                <p><span className="text-muted-foreground">მარაგში:</span> <span className={selected.stock <= LOW_STOCK_THRESHOLD ? 'text-destructive font-bold' : ''}>{selected.stock} {selected.unit}</span></p>
+                <p><span className="text-muted-foreground">გასაყიდი ფასი:</span> {formatCurrency(selected.price)}</p>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
