@@ -1,0 +1,10 @@
+[33m34ccc37[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m fix: refactor App auth initialization to prevent locks and add guaranteed 2.5s loading timeout
+[33md1a447a[m fix: replace supabase.auth.getUser with getSession in getCurrentUserProfile to prevent infinite loading deadlock
+[33m068b7bd[m fix: App infinite loading issue by adding try-catch-finally around authentication init
+[33m9fcec14[m feat: complete cashier role system (types, auth role mapping, UI restrictions, Admin/Accounting panels)
+[33m20ff480[m Admin: create users with email+password via supabase.auth.signUp
+[33md057743[m Fix: disable email field when editing user in admin panel (prevents session logout)
+[33mb75e5f8[m Add category filter tabs to Inventory page
+[33m0849c86[m Add optional category filter to Sales page
+[33m50fb7b5[m Update unit map: only შპონი→მ², ლამინატი/ფანერა/MDF→ცალი
+[33m6c6c92f[m Add category-based auto unit selection (e.g. შპონი → მ²)
