@@ -87,11 +87,12 @@ export default function Admin() {
                 products: products.length,
                 transactions: transactions.length
             });
-        } catch (error) {
-            console.error(error);
+        } catch (error: any) {
+            console.error('Admin load error:', error);
+            const errMsg = error?.message || error?.details || JSON.stringify(error) || 'უცნობი შეცდომა';
             toast({
-                title: 'შეცდომა',
-                description: 'მონაცემების ჩატვირთვა ვერ მოხერხდა',
+                title: 'შეცდომა მონაცემების ჩატვირთვისას',
+                description: errMsg,
                 variant: 'destructive'
             });
         } finally {
