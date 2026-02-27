@@ -5,14 +5,11 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJ
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
-        // Disable lock manager to prevent "Acquiring an exclusive Navigator LockManager lock" timeouts
-        // This is a known issue with @supabase/supabase-js in certain environments.
-        // In typical web apps, relying on default localStorage persistence without the lock is mostly fine.
-        storageKey: 'supabase-auth-token',
-        // Currently, there's no official `lock: false` accepted by types in all versions, 
-        // but configuring custom storage or using an older version is a common fix.
-        // For now we will enable standard storage and just cross our fingers it resets the lock behavior,
-        // or we might need to change the `@supabase/supabase-js` version.
+        storageKey: 'warehouse-app-auth',
+        // @ts-ignore - Bypass Navigator LockManager bug completely
+        lock: async (name: string, acquire: () => Promise<any>) => {
+            return await acquire();
+        }
     }
 });
 export { SUPABASE_URL, SUPABASE_ANON_KEY };

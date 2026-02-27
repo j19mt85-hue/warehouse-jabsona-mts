@@ -67,12 +67,18 @@ export default function Admin() {
 
     const loadData = async () => {
         try {
-            const [s, products, transactions, uList] = await Promise.all([
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('მონაცემების ჩატვირთვის დრო ამოიწურა. გთხოვთ, შეამოწმოთ ინტერნეტი ან გაასუფთავოთ ბრაუზერის მეხსიერება (Ctrl + F5).')), 8000);
+            });
+
+            const dataPromise = Promise.all([
                 getSettings(),
                 getProducts(),
                 getTransactions(),
                 getUsers()
             ]);
+
+            const [s, products, transactions, uList] = await Promise.race([dataPromise, timeoutPromise]) as any;
 
             setSettings(s);
             setUsers(uList);
