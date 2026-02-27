@@ -5,11 +5,7 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJ
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
-        storageKey: 'warehouse-app-auth',
-        // @ts-ignore - Bypass Navigator LockManager bug completely
-        lock: async (name: string, acquire: () => Promise<any>) => {
-            return await acquire();
-        }
+        storageKey: 'warehouse-app-auth'
     }
 });
 export { SUPABASE_URL, SUPABASE_ANON_KEY };
